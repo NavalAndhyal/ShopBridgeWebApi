@@ -1,0 +1,623 @@
+<%@ Register TagPrefix="cc1" Namespace="Ttg.Shared.WebControlLibrary.TreeGrid" Assembly="Ttg.Shared.WebControlLibrary" %>
+<%@ Register TagPrefix="cc3" Namespace="Ttg.Shared.WebControlLibrary.Layout" Assembly="Ttg.Shared.WebControlLibrary" %>
+<%@ Register TagPrefix="cc2" Namespace="Ttg.Shared.WebControlLibrary" Assembly="Ttg.Shared.WebControlLibrary" %>
+<%@ Register TagPrefix="uc1" TagName="Bookmark" Src="~/DesktopModules/Team/BookmarkControl.ascx" %>
+<%@ Control Language="c#" AutoEventWireup="True" CodeBehind="TeamDetails.ascx.cs" Inherits="Ttg.Sfa.DesktopModules.Team.TeamDetails" TargetSchema="http://schemas.microsoft.com/intellisense/ie3-2nav3-0" %>
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2021.3.1109/styles/kendo.default-v2.min.css"/>
+
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://kendo.cdn.telerik.com/2021.3.1109/js/kendo.all.min.js">
+<%--<link rel="stylesheet" href="http://ttg-dev11.thatchertech.com/pws/styles/kendo.common.min.css" />
+<link rel="stylesheet" href="http://ttg-dev11.thatchertech.com/pws/styles/kendo.prowess.min.css" />--%>
+<style>
+    .k-grid .k-grid-header .k-header .k-link {
+        height: auto;
+    }
+
+    .k-grid .k-grid-header .k-header {
+        white-space: normal;
+    }
+
+    .k-grid tbody tr {
+        height: 40px !important;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-family: Verdana,Arial,Helvetica,sans-serif;
+        font-size: 13px;
+        font-weight: 400 !important;
+    }
+
+    .k-grid .k-grid-header {
+        white-space: normal;
+        overflow: visible;
+    }
+</style>
+
+
+<%--<script src="http://ttg-dev11.thatchertech.com/pws/include/kendo.all.min.js"></script>--%>
+
+
+<script>
+    function GetConsultantVCardInfo(portalGuid, gridMstGuid, userGuid, businessGuid, email, genPlanGuid, showUplineLevels, sfaModuleGuid, dvId) {
+        var requestUrl = "/pws/handlers/ConsultantVCard.ashx?portalGuid=" + portalGuid + "&gridMstGuid=" + gridMstGuid + "&userGuid=" + userGuid + "&businessGuid=" + businessGuid + "&email=" + email + "&genPlanGuid=" + genPlanGuid + "&showUplineLevels=" + showUplineLevels + "&sfaModuleGuid=" + sfaModuleGuid + "&src=teamdetail";
+        $j.ajax({
+            url: requestUrl,
+            success: function (data, status, xhr) {
+                $j(dvId).html(data);
+            },
+        });
+    }
+
+    function GetConsultantInfo(portalGuid, gridMstGuid, userGuid, businessGuid, email, genPlanGuid, showUplineLevels, sfaModuleGuid, dvId) {
+        var requestUrl = "/pws/handlers/ConsultantInfo.ashx?portalGuid=" + portalGuid + "&gridMstGuid=" + gridMstGuid + "&userGuid=" + userGuid + "&businessGuid=" + businessGuid + "&email=" + email + "&genPlanGuid=" + genPlanGuid + "&showUplineLevels=" + showUplineLevels + "&sfaModuleGuid=" + sfaModuleGuid;
+        $j.ajax({
+            url: requestUrl,
+            success: function (data, status, xhr) {
+                $j(dvId).html(data);
+            },
+        });
+    }
+
+</script>
+<div id="hiddenSource" style="display: none;"></div>
+
+<div id="dvReportTimeoutError" class="error padding" style="display: none; border-radius: 4px; text-align:center;" runat="server">
+    <Thatcher:PoeLabel ID="lblReportTimeoutError" runat="server" MessageKey="TEAMREPORT_TIMEOUT_WARNING_MSG"></Thatcher:PoeLabel>
+</div>
+<div id="dvHeader" runat="server" class="TeamSummaryHeader">
+    <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <cc2:WebImageButton ID="imgSendEmail" runat="server" Text="Send Email" ClientClick="javascript:SendEmailToSelectedTree();"
+                    AutoSubmit="False">
+                </cc2:WebImageButton>
+                <cc2:WebImageButton ID="btnMove" runat="server" Text="Move" ClientClick="javascript:WB2017MoveSelectedTree();"
+                    AutoSubmit="False" Visible="false">
+                </cc2:WebImageButton>
+                <asp:HiddenField runat="server" ID="hidwb2017beebusinessguids" ClientIDMode="Static" />
+            </td>
+            <td>
+                <cc2:WebImageButton ID="imgShowHideFilters" runat="server" Text="Show/Hide Filters"
+                    ClientClick="javascript:myGrid.ShowHideFilters();" AutoSubmit="False">
+                </cc2:WebImageButton>
+            </td>
+            <td>
+                <cc2:WebImageButton ID="imgChart" runat="server" Visible="False" Text="Chart" AutoSubmit="False">
+                </cc2:WebImageButton>
+            </td>
+            <td>
+                <div id="ListDropdown">
+                    <ul id="listDropdownItem" class="ListDropdownItem" runat="server">
+                        <li>
+                            <asp:HyperLink ID="hypExport" runat="server" TtgNlsKey="SfaExport">Export</asp:HyperLink>
+                            <ul>
+                                <li>
+                                    <asp:LinkButton ID="lbtnExportView" runat="server" TtgNlsKey="SfaExportView" Text="Export View" OnClick="lbtnExportView_Click"></asp:LinkButton>
+                                </li>
+                                <li>
+                                    <asp:LinkButton ID="lbtnExportAll" runat="server" TtgNlsKey="SfaExportAll" Text="Export All" OnClick="lbtnExportAll_Click"></asp:LinkButton>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <ul id="listDropdownItemShowAll" class="ListDropdownItem" runat="server">
+                        <li>
+                            <asp:LinkButton ID="lbtnExportAllShowAll" runat="server" TtgNlsKey="SfaExportAll" Text="Export All" OnClick="lbtnExportAll_Click"></asp:LinkButton>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+            <td>
+                <asp:UpdatePanel ID="updPnl" runat="server" UpdateMode="Conditional" ChildrenAsTriggers="true">
+                    <ContentTemplate>
+                        <Thatcher:PoeLabel runat="server" ID="lbtnTarget" MessageKey="[SfaLegend]"></Thatcher:PoeLabel>
+                        <telerik:RadToolTip ID="popupLegend" runat="server" TargetControlID="lbtnTarget" Position="BottomCenter" ShowEvent="OnClick" HideEvent="ManualClose">
+                            <div id="LegendDescription">
+                                <asp:Label ID="lblLegendDescription" runat="server" CssClass="TeamDetailsLegendText"
+                                    TtgNlsKey="TeamDetailsLegendDescription" TtgNlsOverride="False">The legend below provides the values associated with red/green light identifiers.  These values are based on compensation level.</asp:Label>
+                            </div>
+                            <div id="CompLevelLabel">
+                                <asp:Label ID="lblCompLevel" runat="server" CssClass="TeamDetailsLegendText" TtgNlsKey="TeamDetailsLegendCompLevelDescription"
+                                    TtgNlsOverride="False">Use the dropdown list to view the changes in value.</asp:Label>
+                            </div>
+                            <div id="CompLevel">
+                                <asp:DropDownList ID="ddlCompLevel" runat="server" AutoPostBack="True" OnSelectedIndexChanged="ddlCompLevel_SelectedIndexChanged">
+                                </asp:DropDownList>
+                            </div>
+
+                            <asp:Repeater ID="rpLegend" runat="server">
+                                <HeaderTemplate>
+                                    <table cellspacing="0" width="100%" id="LegendTable">
+                                        <tr class="TeamDetailsLegendSubHeading">
+                                            <td class="TeamDetailsLegendSubHeadingLeft">
+                                                <asp:Label ID="lblConstantHeader" runat="server" TtgNlsKey="Category" TtgNlsOverride="False">Category</asp:Label>
+                                            </td>
+                                            <td class="TeamDetailsLegendSubHeadingRight">
+                                                <asp:Label ID="lblIfValueIs" runat="server" TtgNlsKey="IfTheValueIs" TtgNlsOverride="False">If the value is:</asp:Label>
+                                            </td>
+                                        </tr>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <tr class='<%#((RepeaterItem)Container).ItemIndex % 2 == 0 ? "TeamDetailsLegendRow" : "TeamDetailsLegendAlternateRow" %>'>
+                                        <td>
+                                            <asp:Label ID="lblConstantName" runat="server" Font-Bold="True"></asp:Label>
+                                        </td>
+                                        <td>
+                                            <asp:Label ID="lblGreenGoal" runat="server" CssClass="GreenIndicator"></asp:Label>
+                                        </td>
+                                    </tr>
+                                    <tr class='<%#((RepeaterItem)Container).ItemIndex % 2 == 0 ? "TeamDetailsLegendRow" : "TeamDetailsLegendAlternateRow" %>'>
+                                        <td></td>
+                                        <td>
+                                            <asp:Label ID="lblYellowGoal" runat="server" CssClass="YellowIndicator"></asp:Label>
+                                        </td>
+                                    </tr>
+                                    <tr class='<%#((RepeaterItem)Container).ItemIndex % 2 == 0 ? "TeamDetailsLegendRow" : "TeamDetailsLegendAlternateRow" %>'>
+                                        <td></td>
+                                        <td>
+                                            <asp:Label ID="lblRedGoal" runat="server" CssClass="RedIndicator"></asp:Label>
+                                        </td>
+                                    </tr>
+                                    <tr class='<%#((RepeaterItem)Container).ItemIndex % 2 == 0 ? "TeamDetailsLegendRow" : "TeamDetailsLegendAlternateRow" %>'>
+                                        <td colspan="2">&nbsp;
+                                        </td>
+                                    </tr>
+                                </ItemTemplate>
+                                <FooterTemplate>
+                                    </table>
+                                </FooterTemplate>
+                            </asp:Repeater>
+                        </telerik:RadToolTip>
+                    </ContentTemplate>
+                </asp:UpdatePanel>
+            </td>
+            <td>
+                <cc2:WebImageButton ID="imgExpandAll" runat="server" Text="Expand All" AutoSubmit="false">
+                </cc2:WebImageButton>
+            </td>
+        </tr>
+    </table>
+</div>
+<div id="dvSearch" runat="server" class="dvSearch">
+    <asp:Label ID="lblView" runat="server" TtgNlsKey="View" TtgNlsOverride="False">View</asp:Label>
+
+    <asp:DropDownList ID="ddlView" runat="server" AutoPostBack="True" OnSelectedIndexChanged="ReloadPeriodDropdown">
+    </asp:DropDownList>
+
+    <asp:Label ID="lblPeriod" runat="server" TtgNlsKey="Period" TtgNlsOverride="False">Period</asp:Label>
+
+    <asp:DropDownList ID="ddlPeriod" runat="server">
+    </asp:DropDownList>
+
+    <asp:Label ID="lblViewAs" runat="server" TtgNlsKey="ViewAs" TtgNlsOverride="False">View As</asp:Label>
+
+    <asp:DropDownList ID="ddlViewAs" runat="server" />
+
+    <asp:CheckBox ID="chkAlternateNames" runat="server" TtgNlsKey="SHOWALTERNATENAMES"></asp:CheckBox>
+
+    <asp:Button ID="btnSearch" runat="server" TtgNlsKey="MsgSearch" TtgNlsOverride="False"
+        Text="Search" OnClick="btnSearch_Click"></asp:Button>
+</div>
+<div id="dvSearchAlt" runat="server" visible="false" class="dvSearchAlt">
+    <table>
+        <tr id="trowSearchLabelAlt" runat="server" visible="false" class="trowSearchLabelAlt">
+            <td id="ViewLabelCell">
+                <asp:Label ID="lblViewAlt" runat="server" TtgNlsKey="View">View</asp:Label>
+            </td>
+            <td id="PeriodLabelCell">
+                <asp:Label ID="lblPeriodAlt" runat="server" TtgNlsKey="Period">Period</asp:Label>
+            </td>
+        </tr>
+        <tr id="trowSearchAlt" runat="server" visible="false" class="trowSearchAlt">
+            <td id="ViewCell">
+                <asp:DropDownList ID="ddlViewAlt" runat="server" OnDataBinding="ddlView_DataBinding" AutoPostBack="True" OnSelectedIndexChanged="ReloadPeriodDropdown"></asp:DropDownList>
+            </td>
+            <td id="PeriodCell">
+                <asp:DropDownList ID="ddlPeriodAlt" runat="server" OnDataBinding="ddlPeriod_DataBinding"></asp:DropDownList>
+            </td>
+            <td id="SearchCell">
+                <asp:Button ID="btnSearchAlt" runat="server" TtgNlsKey="MsgSearch" Text="Search" OnClick="btnSearch_Click"></asp:Button>
+            </td>
+        </tr>
+    </table>
+</div>
+<div id="dvSelectView" runat="server" visible="false" align="right" class="dvSelectView">
+    <asp:Label ID="lblClickSearch" runat="server" CssClass="TeamDetailsClickSearch" TtgNlsKey="SelectViewClickSearch"
+        TtgNlsOverride="False">Select your view and click</asp:Label>
+
+    <asp:Image ID="imgClickSearch" runat="server"></asp:Image>
+</div>
+
+<div id="dvFilterContainerPanel" class="dvFilterContainerPanel" runat="server" visible="false">
+    <asp:Label ID="lblCloseFilter" class="lblCloseFilter" runat="server" TtgNlsKey="CloseExternalFilter" Text="Close Filters"></asp:Label>
+    <div id="dvExternalFilter" runat="server" class="dvExternalFilter">
+    </div>
+</div>
+
+<div id="dvGridActions" runat="server" visible="false" class="dvGridActions">
+    <asp:CheckBox ID="cbSelectAll" runat="server" TtgNlsKey="SelectAll" Text="Select All" onclick="SelectAllGridRows(this,'EmailCheckbox')" />
+    <asp:Button ID="btnSendEmail" runat="server" TtgNlsKey="EmailSelected" Text="Email Selected" OnClientClick="javascript:SendEmailToSelectedTree();return false;" />
+    <asp:Label ID="lblSelectedResults" runat="server"></asp:Label>
+    <asp:LinkButton ID="lbtnExportViewAlt" runat="server" CssClass="lbtnExportView" TtgNlsKey="SfaExportView" OnClientClick="javascript:ExportGridToExcel();" OnClick="lbtnExportView_Click" Text="Export View"></asp:LinkButton>
+    <asp:LinkButton ID="lbtnExportAllAlt" runat="server" CssClass="lbtnExportAll" TtgNlsKey="SfaExportAll" Text="Export All" OnClick="lbtnExportAll_Click"></asp:LinkButton>
+</div>
+<div id="dvViewType" runat="server" visible="false" class="dvViewType">
+    <div class="dvResults">
+        <asp:Label ID="lblTeamGridCount" CssClass="lblTeamGridCount" runat="server" Text="Results: {0}"></asp:Label>
+    </div>
+    <asp:LinkButton ID="lbtnListView" CssClass="lbtnListView" runat="server" TtgNlsKey="ListView" Text="List View" OnClick="lbtnViewClicked_Click"></asp:LinkButton>
+    |
+    <asp:LinkButton ID="lbtnTreeView" CssClass="lbtnTreeView" runat="server" TtgNlsKey="TreeView" Text="Tree View" OnClick="lbtnViewClicked_Click"></asp:LinkButton>
+    <asp:LinkButton ID="lbtnClearFilters2" CssClass="lbtnClearFilters2" runat="server" TtgNlsKey="ClearFilters" OnClientClick="ClearFilters();return false;" Text="Clear Filters"></asp:LinkButton>
+    <asp:HiddenField ID="hhidViewType" runat="server" />
+</div>
+<div id="dvGridLegend" runat="server" visible="false" class="dvGridLegend">
+    <asp:Label ID="lblGridLegend" runat="server" TtgNlsKey="TreeGridLegend" CssClass="lblGridLegend"></asp:Label>
+    <asp:Image ID="imgFilterCriteria" runat="server" CssClass="imgFilterCriteria" />
+    <asp:Label ID="lblFilterCriteria" runat="server" CssClass="lblFilterCriteria" TtgNlsKey="LegendFilteredConsultants"></asp:Label>
+    <asp:Image ID="imgOtherConsultants" runat="server" CssClass="imgOtherConsultants" />
+    <asp:Label ID="lblOtherConsultants" runat="server" CssClass="lblOtherConsultants" TtgNlsKey="LegendOtherConsultants"></asp:Label>
+    <asp:Image ID="imgExpandCollapse" runat="server" CssClass="imgExpandCollapse" />
+    <asp:Label ID="lblExpandCollapse" runat="server" CssClass="lblExpandCollapse" TtgNlsKey="LegendExpandCollapse"></asp:Label>
+</div>
+
+<div id="dvFiltersHiddenAllResults" runat="server" style="display: none;" class="dvFiltersHiddenAllResults">
+    <asp:Label ID="lblHiddenAllResults" runat="server" TtgNlsKey="FiltersHiddenAllResults"></asp:Label>
+    <asp:LinkButton ID="lbtnClearFilters" runat="server" TtgNlsKey="ClearFilters" OnClientClick="ClearFilters();return false;" Text="Clear Filters"></asp:LinkButton>
+</div>
+
+<asp:Label ID="lblErrorLoading" runat="server" Visible="False" CssClass="Error"></asp:Label>
+
+<cc3:PwsLayout ID="layout" runat="server" Pattern="TwoVertical">
+    <cc3:PwsPanel ID="pwsPanela" runat="server" Position="a" Width="200" TitleMessageID="Bookmarks" IsCollapsed="true">
+        <div id="dvAdditionalInfo" class="TeamDetailsAdditionalInfo">
+        </div>
+        <asp:UpdatePanel ID="upBookmark" runat="server" UpdateMode="Conditional">
+            <ContentTemplate>
+                <uc1:Bookmark runat="server" ID="bmcBookmarks"></uc1:Bookmark>
+            </ContentTemplate>
+            <Triggers>
+                <asp:AsyncPostBackTrigger ControlID="lbtnAddBookmarkClicked" EventName="Click" />
+            </Triggers>
+        </asp:UpdatePanel>
+    </cc3:PwsPanel>
+    <cc3:PwsPanel ID="pwsPanelb" runat="server" Position="b" TitleMessageID="TeamDetailsGrid">
+        <div id="teamdetails"></div>
+
+<%--        <asp:Label ID="lblNoData" runat="server" CssClass="NoDataMessage" Visible="false"><%= Ttg.Acm.Localization.LocalizationHandler.GetString2("NODATA") %></asp:Label>--%>
+    </cc3:PwsPanel>
+</cc3:PwsLayout>
+
+
+<input id="hhidExportData" type="hidden" runat="server" /><input id="hhidBookmarks" type="hidden" runat="server" />
+<asp:HiddenField ID="hhidBeeBusinessGuidSelected" runat="server" />
+<asp:LinkButton ID="lbtnAddBookmarkClicked" runat="server" OnClick="lbtnAddBookmarkClicked_Click"></asp:LinkButton>
+<asp:UpdatePanel ID="upVCardPopup" runat="server" UpdateMode="Always">
+    <ContentTemplate>
+        <ttg:PWSModalPopup ID="modalPopup" runat="server" Height="275" Width="420" CssClass="dvVCardTemplate">
+            <ContentTemplate>
+                <div id="dvVCardTemplate" runat="server">
+                </div>
+            </ContentTemplate>
+        </ttg:PWSModalPopup>
+    </ContentTemplate>
+</asp:UpdatePanel>
+
+<ttg:PWSModalPopup ID="pmpWB2017" runat="server" Height="375" Width="420" CssClass="pmpWB2017">
+    <ContentTemplate>
+        <asp:UpdatePanel ID="upWB2017" runat="server" UpdateMode="Always">
+            <ContentTemplate>
+                <div id="dvWB2017" class="dvWB2017">
+                    <ttg:NotificationControl ID="ncError" runat="server" />
+                    <table style="width: 100%">
+                        <tr class="move">
+                            <td>&nbsp;</td>
+                            <td>
+                                <Thatcher:PoeLabel runat="server" ID="lblWB2017Move" MessageKey="[WB2017Move]" TagKeyOverride="H2"></Thatcher:PoeLabel>
+                            </td>
+                        </tr>
+                        <tr class="cid">
+                            <td>
+                                <Thatcher:PoeLabel runat="server" ID="lblWB2017CID" MessageKey="[WB2017CID]"></Thatcher:PoeLabel>
+                            </td>
+                            <td>
+                                <Thatcher:TtgTextBoxNumber runat="server" ID="txtWB2017BeeNumber" OnTextChanged="txtWB2017BeeNumber_TextChanged" AutoPostBack="true" MaxLength="10"></Thatcher:TtgTextBoxNumber>
+                                <asp:HiddenField runat="server" ID="hidWB2017NewAssignedToGuid" />
+                                <asp:HiddenField runat="server" ID="hidWB2017RefreshGuid" />
+                            </td>
+                        </tr>
+                        <tr class="name">
+                            <td>
+                                <Thatcher:PoeLabel runat="server" ID="lblWB2017Name" MessageKey="[WB2017Name]"></Thatcher:PoeLabel>
+                            </td>
+                            <td>
+                                <Thatcher:PoeLabel runat="server" ID="lblWB2017NameValue"></Thatcher:PoeLabel>
+                            </td>
+                        </tr>
+                        <tr class="address">
+                            <td>
+                                <Thatcher:PoeLabel runat="server" ID="lblWB2017Address" MessageKey="[WB2017Address]"></Thatcher:PoeLabel></td>
+                            <td>
+                                <Thatcher:PoeLabel runat="server" ID="lblAddress"></Thatcher:PoeLabel>
+                            </td>
+                        </tr>
+                        <tr class="submit">
+                            <td>&nbsp;
+                            </td>
+                            <td>
+                                <Thatcher:PoeButton runat="server" ID="btnWB2017Submit" MessageKey="[WB2017Submit]" OnClick="btnWB2017Submit_Click"></Thatcher:PoeButton>
+                            </td>
+                        </tr>
+                        <tr class="disclaimer">
+                            <td colspan="2">
+                                <Thatcher:PoeLabel runat="server" ID="lblWB2017Disclaimer" MessageKey="[WB2017Disclaimer]" TagKeyOverride="Div"></Thatcher:PoeLabel>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </ContentTemplate>
+        </asp:UpdatePanel>
+    </ContentTemplate>
+</ttg:PWSModalPopup>
+<ttg:PWSModalPopup ID="pmpWB2017NonSelected" runat="server" Height="150" Width="200" CssClass="pmpWB2017NonSelected">
+    <ContentTemplate>
+        <div id="dvWB2017NonSelected" class="dvWB2017NonSelected">
+            <Thatcher:PoeLabel runat="server" ID="lblWB2017NonSelected" MessageKey="[WB2017NonSelected]" TagKeyOverride="Div"></Thatcher:PoeLabel>
+        </div>
+    </ContentTemplate>
+</ttg:PWSModalPopup>
+
+<script type="text/javascript">
+
+    var source;
+    //jQuery(document).ready(function () {
+
+    //    jQuery("[id$='ddlPeriod']").change(configureGrid);
+    //    configureGrid();
+
+    //});
+
+    //function configureGrid() {
+
+    //    console.log("configureGrid");
+    //    var proBatchGuid = jQuery("[id$='ddlPeriod']").val();
+    //    var beeBusinessGuid = jQuery("input[id$='beeBusinessGuid']").val();
+
+    //    var columns = GetColumnData(proBatchGuid, beeBusinessGuid);
+
+    //}
+
+    //function GetColumnData() {
+    //    console.log("Making Column Data Request");
+    //    var columnsUrl = '/pws/DesktopModules/Team/GridFilterProvider.ashx?gridName=My%20Team&batch=31907235847004976611275254998&levels=4&businessGuid=29477838026046446679455735293&planGuid=60484849121121214388562574068&portalGuid=682413481067422923685492796&isFlat=0&loadFull=True&moduleGuid=15252681795177599565559986074&useOriginalBee=False&useAlternateName=False';
+    //    var request = makeRequest(columnsUrl, function (data) {
+    //        console.log("Column Request Complete");
+    //        console.log(data);
+    //        var columnDefinitions = GenerateColumns(data);
+
+    //        TeamDetails(columnDefinitions);
+    //    });
+    //    alert("GetColumnData END");
+    //}
+
+    function SourceReplace(value, inputName) {
+        if (value != undefined && inputName != undefined) {
+            console.log("Source Input: " + inputName);
+            console.log("Source Value: " + value);
+
+            var jsonString = $j('#' + inputName).val();
+
+
+            var json = JSON.parse(jsonString);
+            //  console.log("Lookup");
+            for (var lookup in json) {
+                //console.log(json[lookup]);
+                if (json[lookup]["DataValueField"] == value.toString()) {
+                    // console.log("MATCH!");
+                    //   console.log(json[lookup]);
+                    return json[lookup]["DataTextField"];
+                }
+            }
+        }
+
+    }
+
+    function GenerateColumns(columnData) {
+
+
+        alert("GenerateColumns");
+        var columnDefintions = [];
+        console.log("Generating Kendo Definitions");
+        console.log(columnData.columns);
+        console.log(columnData.source);
+        for (var property in columnData.columns) {
+
+            var templateString = null;
+            //Check for source
+            console.log("Count : " + columnData.source.length)
+            for (var source in columnData.source) {
+                //if (columnData.source[source]["field"] != undefined && columnData.source[property]["field"] != undefined) {
+                if (columnData.source[source]["field"] == columnData.columns[property]["field"]) {
+                        console.log("Source: " + columnData.source[source]["field"] + " - Property: " + columnData.columns[property]["field"]);
+                        //Found source column for this field
+                        //Create hiddden field to store the data
+                        var fieldName = columnData.source[source]["field"];
+                        var inputName = fieldName + "_Source";
+                        console.log("Input Name: " + inputName);
+                        var input = document.createElement("input");
+                        input.setAttribute("type", "hidden");
+                        input.setAttribute("id", inputName);
+                        var json = JSON.stringify(columnData.source[source]["lookup"]);
+                        input.setAttribute("value", json);
+                        //append to form element that you want .
+                        document.getElementById("hiddenSource").appendChild(input);
+                        templateString = " #= SourceReplace(data." + fieldName + ",'" + inputName + "') #";
+                    }
+                }
+
+            if (columnData.columns[property]["field"]!= undefined && columnData.columns[property]["field"].toLowerCase() == "emailcheckbox") {
+                    templateString = "<input type=\"checkbox\" name=\"email\" />";
+                }
+
+
+                columnDefintions.push({
+                    field: columnData.columns[property]["field"],
+                    title: columnData.columns[property]["title"],
+                    hidden: columnData.columns[property]["hidden"],
+                    width: columnData.columns[property]["width"],
+                    expandable: columnData.columns[property]["expandable"],
+                    locked: columnData.columns[property]["locked"],
+                    filterable: columnData.columns[property]["filterable"],
+                    template: templateString
+                });
+                templateString = null;
+                columnType = null;
+            }
+        
+        console.log(columnDefintions);
+        return columnDefintions;
+
+
+    }
+
+    //function TeamDetails(columnDefinitions) {
+    //    alert("TeamDetails");
+    //    console.log("Making Team Details Data Request");
+    //    var requestUrl = '/pws/DesktopModules/Team/TeamDetailsProvider.ashx?gridName=My%20Team&batch=31907235847004976611275254998&levels=4&businessGuid=29477838026046446679455735293&planGuid=60484849121121214388562574068&portalGuid=682413481067422923685492796&isFlat=0&loadFull=True&moduleGuid=15252681795177599565559986074&useOriginalBee=False&useAlternateName=False';
+
+    //    var request = makeRequest(requestUrl, function (data) {
+    //        console.log("Team Details Data Request Complete");
+    //        var dataSource = new kendo.data.TreeListDataSource({
+    //            data: data,
+    //            schema: {
+    //                model: {
+    //                    id: "Id",
+    //                    parentId: "ParentId",
+    //                    expanded: true,
+    //                    fields: {
+    //                        Id: { field: "Id", type: "number", nullable: false },
+    //                        ParentId: { field: "ParentId", nullable: true }
+    //                    }
+    //                }
+    //            }
+
+    //        });
+    //        console.log("Generating Kendo Grid ");
+    //        console.log("Using Column Definitions:");
+    //        console.log(columnDefinitions);
+    //        $j("#teamdetails").kendoTreeList({
+    //            toolbar: ["excel"],
+    //            excel: {
+    //                fileName: "Kendo UI TreeList Export.xlsx",
+
+    //                filterable: true
+    //            },
+    //            dataSource: dataSource,
+    //            height: 800,
+    //            filterable: true,
+    //            sortable: true,
+    //            columns: columnDefinitions,
+    //            dataBinding: onDataBinding,
+    //            dataBound: onDataBound
+    //        });
+    //    });
+    //}
+
+
+    function onDataBound(arg) {
+        console.log("TreeList data bound");
+        console.log(arg);
+    }
+
+    function onDataBinding(arg) {
+        console.log("TreeList data binding");
+        console.log(arg);
+    }
+
+    function makeRequest(requestUrl, doneFunction) {
+        //var cultureName = readCookie("UserSelectedLanguage");
+
+        //if (!cultureName) {
+        //    cultureName = 'en-Us';
+        //}
+
+
+
+        //var requestUrl = '/PWS/DesktopModules/Team/TeamDetailsProvider.ashx?reportid=' + reportid + '&probatchguid=' + proBatchGuid + '&beebusinessguid=' + beeBusinessGuid + '&culture=' + cultureName;
+
+        var request = jQuery.ajax({
+            url: requestUrl,
+            cache: true,
+            type: 'GET',
+            datatype: 'json',
+            contentType: 'application/json; charset=utf-8'
+
+        });
+        
+        request.done(doneFunction);
+    }
+
+    function GenerateModel(data) {
+
+        var model = {};
+        model.id = "BeeEntityGuid";
+        var fields = {};
+
+        if (typeof data === "undefined") {
+            model.fields = fields;
+            return model;
+        }
+
+        for (var property in data) {
+            var propType = typeof data[property];
+            if (propType == "number") {
+                fields[property] = {
+                    type: "number",
+                    validation: {
+                        required: true
+                    }
+                };
+            } else if (propType == "boolean") {
+                fields[property] = {
+                    type: "boolean",
+                    validation: {
+                        required: true
+                    }
+                };
+            } else if (propType == "string") {
+                var parsedDate = kendo.parseDate(data[property]);
+                if (parsedDate) {
+                    fields[property] = {
+                        type: "date",
+                        validation: {
+                            required: true
+                        }
+                    };
+                    console.log("Pushing Data");
+                    console.log(property);
+                    dateFields.push(property);
+                } else {
+                    fields[property] = {
+                        validation: {
+                            required: true
+                        }
+                    };
+                }
+            } else {
+                fields[property] = {
+                    validation: {
+                        required: true
+                    }
+                };
+            }
+
+        }
+        model.fields = fields;
+
+        return model;
+    }
+
+</script>
